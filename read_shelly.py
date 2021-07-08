@@ -2,7 +2,6 @@
 import requests
 import getpass
 from datetime import datetime, timedelta
-import pandas as pd
 import math
 import json
 import logging
@@ -17,8 +16,8 @@ from datetime import datetime
 # === Part 0.1: Set global variables                                   ====
 # =========================================================================
 PROGRAM_NAME = 'read_shelly'
-PROGRAM_VERSION = "0.1"
-PROGRAM_VERSION_DATE = "05-07-2021"
+PROGRAM_VERSION = "0.11"
+PROGRAM_VERSION_DATE = "08-07-2021"
 PROGRAM_AUTHOR = "Bas van der Worp"
 CONFIG_STORE = '/shelly/shelly_config.json'
 CONFIG = read_config(CONFIG_STORE)
@@ -26,6 +25,7 @@ LOG_PATH_BASE = CONFIG['LOG_PATH_BASE']
 OUTPUT_PATH_BASE = CONFIG['OUTPUT_PATH_BASE']
 DEVICES = CONFIG['devices']
 OUTFILE = 'c:/temp/outfile.log'
+RETRY_TIME = 2
 
 if __name__ == '__main__':
     # ========================================================================
@@ -120,7 +120,7 @@ if __name__ == '__main__':
 
         url = f'http://{device_url}/meter/0'
 
-        while try_number < 5 and not success:
+        while try_number < 10 and not success:
             try:
                 result_bytes = requests.get(url, auth=(username,
                                                        password),
@@ -128,9 +128,24 @@ if __name__ == '__main__':
                 success = True
             except requests.exceptions.Timeout:
                 try_number += 1
-                logger.warning('timeout error, retry {try_number}')
-                time.sleep(2)
-                pass
+                logger.warning(f'timeout error, retry {try_number}')
+                time.sleep(RETRY_TIME)
+                continue
+
+            except requests.exceptions.ConnectionError as err:
+                try_number += 1
+                logger.warning(f'Error ConnectionError, retry ' + \
+                               f'{try_number} in {RETRY_TIME} secs')
+                time.sleep(RETRY_TIME)
+                continue
+
+            except requests.exceptions.NewConnectionError as err:
+                try_number += 1
+                logger.warning(f'Error NewConnectionError, retry ' + \
+                               f'{try_number} in {RETRY_TIME} secs')
+                time.sleep(RETRY_TIME)
+                continue
+
         result_dict = eval(result_bytes.content.decode('utf-8').replace('true',
                                                                         'True'))
         power = result_dict['power']
