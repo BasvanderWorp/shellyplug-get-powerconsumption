@@ -2,6 +2,7 @@
 import requests
 import getpass
 from datetime import datetime, timedelta
+import urllib.error, urllib.request
 import math
 import json
 import logging
@@ -16,16 +17,16 @@ from datetime import datetime
 # === Part 0.1: Set global variables                                   ====
 # =========================================================================
 PROGRAM_NAME = 'read_shelly'
-PROGRAM_VERSION = "0.11"
-PROGRAM_VERSION_DATE = "08-07-2021"
+PROGRAM_VERSION = "0.12"
+PROGRAM_VERSION_DATE = "09-07-2021"
 PROGRAM_AUTHOR = "Bas van der Worp"
 CONFIG_STORE = '/shelly/shelly_config.json'
 CONFIG = read_config(CONFIG_STORE)
 LOG_PATH_BASE = CONFIG['LOG_PATH_BASE']
 OUTPUT_PATH_BASE = CONFIG['OUTPUT_PATH_BASE']
 DEVICES = CONFIG['devices']
-OUTFILE = 'c:/temp/outfile.log'
-RETRY_TIME = 2
+POLLING_INTERVAL = 0.5
+RETRY_INTERVAL = 5
 
 if __name__ == '__main__':
     # ========================================================================
@@ -107,44 +108,73 @@ if __name__ == '__main__':
 
     logger.info(f'Output path      : {OUTPUT_PATH}')
 
-    # Set uri
+    # Initialize
     headers = {'User-Agent': 'curl/7.55.1'}
+    first_get = True
 
     # =========================================================================
     # === Part 1.0: Start polling and writing output                       ====
     # =========================================================================
     while True:
-        time.sleep(0.5)
-        try_number = 1
-        success = False
+        time.sleep(POLLING_INTERVAL)
 
         url = f'http://{device_url}/meter/0'
 
-        while try_number < 10 and not success:
-            try:
-                result_bytes = requests.get(url, auth=(username,
-                                                       password),
-                                            headers=headers, timeout=5)
-                success = True
-            except requests.exceptions.Timeout:
-                try_number += 1
-                logger.warning(f'timeout error, retry {try_number}')
-                time.sleep(RETRY_TIME)
-                continue
+        try:
+            result_bytes = requests.get(url, auth=(username,
+                                                   password),
+                                        headers=headers, timeout=5)
+            try_number = 1
+            if first_get:
+                try:
+                    urllib.request.urlopen("http://www.google.com")
+                    logger.info("ShellyPlug and internet connection: OK")
+                    first_get = False
+                except urllib.error.URLError as err2:
+                    logger.error(f"ShellyPlug OK, but Network currently down: {e}")
+                    first_get = False
+        except requests.exceptions.Timeout as err1:
+            try_number += 1
+            logger.warning(f'timeout error {err1}, try {try_number}' + \
+                    f' in {RETRY_INTERVAL} secs, error: ' + \
+                           f'{err1.error}')
+            if try_number < 10:
+                try:
+                    urllib.request.urlopen("http://www.google.com")
+                    logger.info("Internet connection: OK")
+                except urllib.error.URLError as err2:
+                    logger.error(f"Network currently down: {e}")
+            time.sleep(RETRY_INTERVAL)
+            first_get = True 
+            continue
 
-            except requests.exceptions.ConnectionError as err:
-                try_number += 1
-                logger.warning(f'Error ConnectionError, retry ' + \
-                               f'{try_number} in {RETRY_TIME} secs')
-                time.sleep(RETRY_TIME)
-                continue
+        except requests.exceptions.ConnectionError as err1:
+            try_number += 1
+            logger.warning(f'Error ConnectionError {err1}, try ' + \
+                           f'{try_number} in {RETRY_INTERVAL} secs')
+            if try_number < 10:
+                try:
+                    urllib.request.urlopen("http://www.google.com")
+                    logger.info("Internet connection: OK")
+                except urllib.error.URLError as err2:
+                    logger.error(f"Network currently down: {e}")
+            time.sleep(RETRY_INTERVAL)
+            first_get = True 
+            continue
 
-            except requests.exceptions.NewConnectionError as err:
-                try_number += 1
-                logger.warning(f'Error NewConnectionError, retry ' + \
-                               f'{try_number} in {RETRY_TIME} secs')
-                time.sleep(RETRY_TIME)
-                continue
+        except requests.exceptions.NewConnectionError as err1:
+            try_number += 1
+            logger.warning(f'Error NewConnectionError (err1), try ' + \
+                           f'{try_number} in {RETRY_INTERVAL} secs')
+            if try_number < 10:
+                try:
+                    urllib.request.urlopen("http://www.google.com")
+                    logger.info("Internet connection: OK")
+                except urllib.error.URLError as err2:
+                    logger.error(f"Network currently down: {e}")
+            time.sleep(RETRY_INTERVAL)
+            first_get = True 
+            continue
 
         result_dict = eval(result_bytes.content.decode('utf-8').replace('true',
                                                                         'True'))
