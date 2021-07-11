@@ -17,8 +17,8 @@ from datetime import datetime
 # === Part 0.1: Set global variables                                   ====
 # =========================================================================
 PROGRAM_NAME = 'read_shelly'
-PROGRAM_VERSION = "0.12"
-PROGRAM_VERSION_DATE = "09-07-2021"
+PROGRAM_VERSION = "0.13"
+PROGRAM_VERSION_DATE = "11-07-2021"
 PROGRAM_AUTHOR = "Bas van der Worp"
 CONFIG_STORE = '/shelly/shelly_config.json'
 CONFIG = read_config(CONFIG_STORE)
@@ -131,19 +131,19 @@ if __name__ == '__main__':
                     logger.info("ShellyPlug and internet connection: OK")
                     first_get = False
                 except urllib.error.URLError as err2:
-                    logger.error(f"ShellyPlug OK, but Network currently down: {e}")
+                    logger.error(f"ShellyPlug OK, but Network currently down: {err2}")
                     first_get = False
         except requests.exceptions.Timeout as err1:
             try_number += 1
             logger.warning(f'timeout error {err1}, try {try_number}' + \
                     f' in {RETRY_INTERVAL} secs, error: ' + \
-                           f'{err1.error}')
+                           f'{err1}')
             if try_number < 10:
                 try:
                     urllib.request.urlopen("http://www.google.com")
                     logger.info("Internet connection: OK")
                 except urllib.error.URLError as err2:
-                    logger.error(f"Network currently down: {e}")
+                    logger.error(f"Network currently down: {err2}")
             time.sleep(RETRY_INTERVAL)
             first_get = True 
             continue
@@ -157,7 +157,7 @@ if __name__ == '__main__':
                     urllib.request.urlopen("http://www.google.com")
                     logger.info("Internet connection: OK")
                 except urllib.error.URLError as err2:
-                    logger.error(f"Network currently down: {e}")
+                    logger.error(f"Network currently down: {err2}")
             time.sleep(RETRY_INTERVAL)
             first_get = True 
             continue
@@ -171,7 +171,7 @@ if __name__ == '__main__':
                     urllib.request.urlopen("http://www.google.com")
                     logger.info("Internet connection: OK")
                 except urllib.error.URLError as err2:
-                    logger.error(f"Network currently down: {e}")
+                    logger.error(f"Network currently down: {err2}")
             time.sleep(RETRY_INTERVAL)
             first_get = True 
             continue
