@@ -17,8 +17,8 @@ from datetime import datetime
 # === Part 0.1: Set global variables                                   ====
 # =========================================================================
 PROGRAM_NAME = 'read_shelly'
-PROGRAM_VERSION = "0.13"
-PROGRAM_VERSION_DATE = "11-07-2021"
+PROGRAM_VERSION = "0.14"
+PROGRAM_VERSION_DATE = "06-09-2021"
 PROGRAM_AUTHOR = "Bas van der Worp"
 CONFIG_STORE = '/shelly/shelly_config.json'
 CONFIG = read_config(CONFIG_STORE)
@@ -128,50 +128,50 @@ if __name__ == '__main__':
             if first_get:
                 try:
                     urllib.request.urlopen("http://www.google.com")
-                    logger.info("ShellyPlug and internet connection: OK")
+                    logger.info("{PROGRAM_NAME}: ShellyPlug and internet connection: OK")
                     first_get = False
                 except urllib.error.URLError as err2:
-                    logger.error(f"ShellyPlug OK, but Network currently down: {err2}")
+                    logger.error(f"{PROGRAM_NAME}: ShellyPlug OK, but Network currently down: {err2}")
                     first_get = False
         except requests.exceptions.Timeout as err1:
             try_number += 1
-            logger.warning(f'timeout error {err1}, try {try_number}' + \
+            logger.warning(f'{PROGRAM_NAME}: timeout error {err1}, try {try_number}' + \
                     f' in {RETRY_INTERVAL} secs, error: ' + \
                            f'{err1}')
             if try_number < 10:
                 try:
                     urllib.request.urlopen("http://www.google.com")
-                    logger.info("Internet connection: OK")
+                    logger.info("{PROGRAM_NAME}: Internet connection: OK")
                 except urllib.error.URLError as err2:
-                    logger.error(f"Network currently down: {err2}")
+                    logger.error(f"{PROGRAM_NAME}: Network currently down: {err2}")
             time.sleep(RETRY_INTERVAL)
             first_get = True 
             continue
 
         except requests.exceptions.ConnectionError as err1:
             try_number += 1
-            logger.warning(f'Error ConnectionError {err1}, try ' + \
+            logger.warning(f'{PROGRAM_NAME}: Error ConnectionError {err1}, try ' + \
                            f'{try_number} in {RETRY_INTERVAL} secs')
             if try_number < 10:
                 try:
                     urllib.request.urlopen("http://www.google.com")
-                    logger.info("Internet connection: OK")
+                    logger.info("{PROGRAM_NAME}: Internet connection: OK")
                 except urllib.error.URLError as err2:
-                    logger.error(f"Network currently down: {err2}")
+                    logger.error(f"{PROGRAM_NAME}: Network currently down: {err2}")
             time.sleep(RETRY_INTERVAL)
             first_get = True 
             continue
 
         except requests.exceptions.NewConnectionError as err1:
             try_number += 1
-            logger.warning(f'Error NewConnectionError (err1), try ' + \
+            logger.warning(f'{PROGRAM_NAME}: Error NewConnectionError (err1), try ' + \
                            f'{try_number} in {RETRY_INTERVAL} secs')
             if try_number < 10:
                 try:
                     urllib.request.urlopen("http://www.google.com")
-                    logger.info("Internet connection: OK")
+                    logger.info("{PROGRAM_NAME}: Internet connection: OK")
                 except urllib.error.URLError as err2:
-                    logger.error(f"Network currently down: {err2}")
+                    logger.error(f"{PROGRAM_NAME}: Network currently down: {err2}")
             time.sleep(RETRY_INTERVAL)
             first_get = True 
             continue
